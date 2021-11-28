@@ -1,0 +1,9 @@
+name: ArenaForFight
+version: 1.0 Snapshot
+author: Sma1lboy
+main: com.sma1lboy.ArenaForFight.ArenaForFight
+commands:
+  gui:
+    description: open the gui menu
+    usage: /<command>
+    aliases: GUI
