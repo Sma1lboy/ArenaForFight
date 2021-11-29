@@ -1,5 +1,6 @@
 package com.sma1lboy.ArenaForFight;
 
+import com.sma1lboy.ArenaForFight.Commands.CheckHealthCommand;
 import com.sma1lboy.ArenaForFight.Commands.GUICommand;
 import com.sma1lboy.ArenaForFight.events.EventListener;
 import org.bukkit.ChatColor;
@@ -15,6 +16,7 @@ public class ArenaForFight extends JavaPlugin  {
         getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: ArenaForFight is enable!");
         getServer().getPluginManager().registerEvents(new EventListener(), this);
         Objects.requireNonNull(getServer().getPluginCommand("gui")).setExecutor(new GUICommand());
+        getServer().getPluginCommand("healthCheck").setExecutor(new CheckHealthCommand());
     }
 
     @Override

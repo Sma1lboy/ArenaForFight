@@ -35,7 +35,6 @@ public class GUICommand implements CommandExecutor {
             //set on fight button
             fight.setItemMeta(fightMeta);
 
-
             ItemStack[] menu = {fight, quit};
 
             gui.setContents(menu);
