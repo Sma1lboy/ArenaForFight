@@ -1,18 +1,22 @@
 package com.sma1lboy.ArenaForFight.events;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,19 +24,19 @@ import java.util.Objects;
 
 public class EventListener implements Listener {
     //store second player
+    private Player firstPlayer = null;
     private Player secondPlayer = null;
-    private HashMap<Player, Double> HPManager = new HashMap<>();
+    //private HashMap<Player, Double> HPManager = new HashMap<>();
+    HashMap<Player, Player> playerManager = new HashMap<>();
 
     //It called when player interact entity
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
-        Player firstPlayer =  event.getPlayer(); //the caller
+        this.firstPlayer =  event.getPlayer(); //the caller
         Entity entity =  event.getRightClicked();  //the entity interact by player(caller)
 
         //creat the gui
         Inventory gui = setMainMenu();
-
-
 
 //        FIXME: showing the entity not player right now, test with pig
         if ((entity instanceof Player secondPlayer)) {
@@ -41,6 +45,7 @@ public class EventListener implements Listener {
             //store to class variable
             this.secondPlayer = secondPlayer;
         }
+
 
     }
 
@@ -67,7 +72,6 @@ public class EventListener implements Listener {
         //create a gui for accept fight or not
         Inventory acceptGui = setAcceptMenu();
 
-
         //it called when someone right-clicked another player to ask to fight
         if (event.getView().getTitle().equalsIgnoreCase("Arena For Fight")) {
             switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
@@ -85,7 +89,18 @@ public class EventListener implements Listener {
                 //agree fight
                 case DIAMOND_SWORD:
                     this.secondPlayer.closeInventory();
-                    this.secondPlayer.sendMessage("TEST");
+                    //FIXME: needs to change to maximum health
+//                    this.firstPlayer.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+//                    this.secondPlayer.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+                    firstPlayer.setHealth(20);
+                    secondPlayer.setHealth(20);
+                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+
+                    playerManager.put(this.firstPlayer, this.firstPlayer);
+                    playerManager.put(this.secondPlayer, this.secondPlayer);
+                    //FIXME: delete next line after finish TEST
+                    firstPlayer.sendMessage(playerManager.toString());
                     break;
                 //disagree fight
                 case WOODEN_SWORD:
@@ -93,6 +108,37 @@ public class EventListener implements Listener {
                     break;
             }
             event.setCancelled(true);
+        }
+    }
+
+    //    it called when entity get damage from another entity
+    // FIXME: change the event to update player health frequency
+    @EventHandler
+    public void onPlayerFightingPlayer(EntityDamageByEntityEvent e) {
+        if (playerManager.containsValue((Player)e.getDamager())) {
+            //getEntity giving who is getting damage
+            e.getEntity().getName();
+            Player playerGotDmg = playerManager.get((Player) e.getEntity());
+            //FIXME: change the hp value
+           if (playerGotDmg.getHealth() < 10){
+               playerGotDmg.sendTitle(ChatColor.RED + "You lose!", "Don't worry, win back next time!", 1, 100, 1);
+               ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + "You WIN!", "Keep Going!", 1, 100, 1);
+                //Firework to the winner!!!!!!!!!!!!!!
+               Firework winnerFirework = e.getDamager().getWorld().spawn(e.getDamager().getLocation(), Firework.class);
+               FireworkMeta data = winnerFirework.getFireworkMeta();
+               data.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
+               data.setPower(0);
+               winnerFirework.setFireworkMeta(data);
+
+               playerManager.get((Player)e.getDamager()).setHealth(20);
+               playerManager.get((Player)e.getEntity()).setHealth(20);
+               playerManager.remove((Player)e.getDamager());
+               playerManager.remove((Player)e.getEntity());
+               //FIXME: check clear or not
+               firstPlayer.sendMessage(playerManager.toString());
+               //还没有增加获胜计数系统 或者什么奖励系统
+
+           }
         }
     }
 //    UPDATE: delete setGui method because its not useful
