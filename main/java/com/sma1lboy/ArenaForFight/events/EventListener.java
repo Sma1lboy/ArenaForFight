@@ -1,20 +1,18 @@
 package com.sma1lboy.ArenaForFight.events;
 import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -22,11 +20,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.logging.Handler;
+import java.util.*;
+
 
 public class EventListener implements Listener {
     //store second player
@@ -35,26 +30,26 @@ public class EventListener implements Listener {
     //private HashMap<Player, Double> HPManager = new HashMap<>();
     public HashMap<Player, Player> playerManager = new HashMap<>();
 //    private HashMap<Player, WorldBorder> worldBorderManager = new HashMap<>();
+    public HashMap<Player, ItemStack[]> playerInvManager = new HashMap<>();
 
-
+    //GUI PART
     //It called when player interact entity
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         this.firstPlayer =  event.getPlayer(); //the caller
-        Entity entity =  event.getRightClicked();  //the entity interact by player(caller)
-
         //creat the gui
         Inventory gui = setMainMenu();
 
 //        FIXME: showing the entity not player right now, test with pig
-        if ((entity instanceof Player secondPlayer)) {
-            event.setCancelled(true);
-            firstPlayer.openInventory(gui);
+        if ((event.getRightClicked() instanceof Player secondPlayer)) {
             //store to class variable
             this.secondPlayer = secondPlayer;
+            event.setCancelled(true);
+            //Prevent the player can reopen the GUI when they are fighting
+            if(!(playerManager.containsKey(this.firstPlayer) || playerManager.containsValue(this.firstPlayer))) {
+                firstPlayer.openInventory(gui);
+            }
         }
-
-
     }
 
     //it called when someone open the inventory/GUI
@@ -78,12 +73,19 @@ public class EventListener implements Listener {
         }
 
         //create a gui for accept fight or not
-        Inventory acceptGui = setAcceptMenu();
-
+        Inventory acceptGui = null;
         //it called when someone right-clicked another player to ask to fight
         if (event.getView().getTitle().equalsIgnoreCase("Arena For Fight")) {
             switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
                 case DIAMOND_SWORD:
+                    acceptGui = setAcceptMenu("SOLO");
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    player.closeInventory();
+                    this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + " asks to fight!");
+                    this.secondPlayer.openInventory(acceptGui);
+                    break;
+                case GOLDEN_SWORD:
+                    acceptGui = setAcceptMenu("Random Items Fight");
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     player.closeInventory();
                     this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + " asks to fight!");
@@ -92,49 +94,91 @@ public class EventListener implements Listener {
             }
             event.setCancelled(true);
         }
+
         //it called when someone after right-clicked, another player will get a gui to agree or disagree
-        if (event.getView().getTitle().equalsIgnoreCase(ChatColor.RED +  "Arena For Fight responder")) {
+        if (event.getView().getTitle().equalsIgnoreCase("SOLO")) {
             switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
                 //agree fight
                 case DIAMOND_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
                     //FIXME: needs to change to maximum health
-//                    this.firstPlayer.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-//                    this.secondPlayer.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                     firstPlayer.setHealth(20);
                     secondPlayer.setHealth(20);
                     firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
                     secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
 
-                    playerManager.put(this.firstPlayer, this.firstPlayer);
-                    playerManager.put(this.secondPlayer, this.secondPlayer);
+                    playerManager.put(this.firstPlayer, this.secondPlayer);
+
                     //FIXME: delete next line after finish TEST
                     firstPlayer.sendMessage(playerManager.toString());
 
-
                     break;
                 //disagree fight
+            }
+            event.setCancelled(true);
+        }
+        //random Items fight
+        if(event.getView().getTitle().equalsIgnoreCase("Random Items Fight")) {
+            switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
+                //agree
+                case DIAMOND_SWORD:
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    this.secondPlayer.closeInventory();
+                    //FIXME: needs to change to maximum health
+                    firstPlayer.setHealth(20);
+                    secondPlayer.setHealth(20);
+                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    playerInvManager.put(firstPlayer, firstPlayer.getInventory().getContents());
+                    playerInvManager.put(secondPlayer, secondPlayer.getInventory().getContents());
+                    playerManager.put(this.firstPlayer, this.secondPlayer);
+                    firstPlayer.getInventory().clear();
+                    secondPlayer.getInventory().clear();
+
+                    //makes the weapon more fun or something that!
+                    ItemStack[] mainHandWeapon = {new ItemStack(Material.DIAMOND_SWORD), new ItemStack(Material.WOODEN_SWORD),
+                            new ItemStack(Material.IRON_AXE)};
+                    ItemStack[] chestPlate = {new ItemStack(Material.DIAMOND_CHESTPLATE), new ItemStack(Material.IRON_CHESTPLATE),
+                    new ItemStack(Material.LEATHER_CHESTPLATE)};
+
+                    firstPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
+                    firstPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
+                    secondPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
+                    secondPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
+
+
+                    break;
+                //disagree
                 case WOODEN_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 2);
                     this.secondPlayer.closeInventory();
                     break;
+
             }
-            event.setCancelled(true);
         }
     }
+    private int randomPick(int i) {
+        Random rnd = new Random();
+        return rnd.nextInt(i);
+    }
 
+
+    // FIGHT PART
     //    it called when entity get damage from another entity
     // FIXME: change the event to update player health frequency
     @EventHandler
     public void onPlayerFightingPlayer(EntityDamageByEntityEvent e) {
         //FIXME: TEST
         e.getEntity().sendMessage(String.valueOf(e.getDamager().getType()));
-        if (playerManager.containsValue((Player)e.getDamager())) {
+        if (playerManager.containsValue((Player)e.getDamager()) || playerManager.containsKey((Player)e.getDamager())) {
+
 
             //getEntity giving who is getting damage
             e.getEntity().getName();
-            Player playerGotDmg = playerManager.get((Player) e.getEntity());
+
+            Player playerGotDmg = (Player) e.getEntity();
+
             //FIXME: test hp, delet next 2 lines
             playerGotDmg.sendMessage(String.valueOf(playerGotDmg.getHealth()));
             playerGotDmg.sendMessage("Damage was "+ String.valueOf(e.getDamage()));
@@ -143,6 +187,7 @@ public class EventListener implements Listener {
                e.setCancelled(true);
                playerGotDmg.sendTitle(ChatColor.RED + "You lose!", "Don't worry, win back next time!", 1, 100, 1);
                ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + "You WIN!", "Keep Going!", 1, 100, 1);
+
                 //Firework to the winner!!!!!!!!!!!!!!
                Firework winnerFirework = e.getDamager().getWorld().spawn(e.getDamager().getLocation(), Firework.class);
                FireworkMeta data = winnerFirework.getFireworkMeta();
@@ -150,17 +195,29 @@ public class EventListener implements Listener {
                data.setPower(0);
                winnerFirework.setFireworkMeta(data);
 
-               playerManager.get((Player)e.getDamager()).setHealth(20);
-               playerManager.get((Player)e.getEntity()).setHealth(20);
-               playerManager.remove((Player)e.getDamager());
-               playerManager.remove((Player)e.getEntity());
+               ((Player) e.getDamager()).setHealth(20);
+               ((Player) e.getEntity()).setHealth(20);
+               //if random item mode, it will give back player's inventory back
+               if(playerInvManager.containsKey((Player) e.getDamager())) {
+                   ((Player) e.getDamager()).getInventory().setContents(playerInvManager.get((Player) e.getDamager()));
+                   ((Player) e.getEntity()).getInventory().setContents(playerInvManager.get((Player) e.getEntity()));
+               }
+               //remove both player from the hashmap to prevent keep they can't hit anything
+               if (playerManager.containsKey((Player)e.getDamager())) {
+                   playerManager.remove((Player) e.getDamager());
+               }
+               else {
+                   playerManager.remove((Player)e.getEntity());
+               }
+               playerInvManager.remove((Player)e.getEntity());
+               playerInvManager.remove((Player)e.getDamager());
                //FIXME: check clear or not
                firstPlayer.sendMessage(playerManager.toString());
                //还没有增加获胜计数系统 或者什么奖励系统
-
            }
         }
     }
+
     // it called prevent player pick up item when they are fighting
     @EventHandler
     public void playerPickupItemEvent(PlayerPickupItemEvent e) {
@@ -184,50 +241,63 @@ public class EventListener implements Listener {
     }
     // prevent player break the block
     @EventHandler
-    public void playerPlaceBlockEvent(BlockBreakEvent e) {
+    public void playerBreakBlockEvent(BlockBreakEvent e) {
         if(playerManager.containsKey(e.getPlayer())) {
             e.setCancelled(true);
         }
     }
 
-//    UPDATE: delete setGui method because its not useful
-//    private Inventory setGui(String guiType) {
-//        switch (guiType) {
-//            case "setMainMenu":
-//                setMainMenu();
-//                break;
-//            case "setAcceptMenu":
-//                setAcceptMenu();
-//                break;
-//
-//        }
-//        return null;
-//    }
+    //prevent player death by falling or mob kill when they are fighting
+    @EventHandler
+    public void playerDeathEvent(EntityDeathEvent e) {
+        if(playerManager.containsKey((Player)e.getEntity())) {
+            playerManager.remove((Player)e.getEntity());
+        }
+    }
+
     private Inventory setMainMenu() {
         //Create Fight agreement GUI
-         Inventory gui = Bukkit.createInventory(null, 9, "Arena For Fight");
+        Inventory gui = Bukkit.createInventory(null, 9, "Arena For Fight");
         //create button
         ItemStack fight = new ItemStack(Material.DIAMOND_SWORD);
+        //create random items fight
+        ItemStack rndItemFight = new ItemStack(Material.GOLDEN_SWORD);
+        ItemStack quit = new ItemStack(Material.BARRIER);
 
         //Set button's lore and meta
         ItemMeta fightMeta = fight.getItemMeta();
-        fightMeta.setDisplayName(ChatColor.RED + "Start Fight");
+        fightMeta.setDisplayName(ChatColor.WHITE + "Start SOLO Fight");
         fightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
         fightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
-        //Create a lore array
+        //Create a lore
         List<String> fightMetaLore = new ArrayList<>();
         fightMetaLore.add(ChatColor.GOLD + "Click to Start fight with your friend!");
         fightMetaLore.add("XD");
         //Assign back to button from class ItemMeta
         fightMeta.setLore(fightMetaLore);
         fight.setItemMeta(fightMeta);
+
+        ItemMeta rndItemFightMeta = rndItemFight.getItemMeta();
+        rndItemFightMeta.setDisplayName(ChatColor.WHITE + "Start random items Fight");
+        rndItemFightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
+        rndItemFightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
+        //Create a lore
+        List<String> rndItemFightMetaLore = new ArrayList<>();
+        rndItemFightMetaLore.add(ChatColor.GOLD + "Diamond or wood?");
+        //Assign back to button from class ItemMeta
+        rndItemFightMeta.setLore(rndItemFightMetaLore);
+        rndItemFight.setItemMeta(rndItemFightMeta);
+
+
         gui.setItem(2, fight);
+        gui.setItem(4, rndItemFight);
+        gui.setItem(8, quit);
         return gui;
 
     }
-    private Inventory setAcceptMenu() {
+    private Inventory setAcceptMenu(String GuiName) {
 //        create accept GUi after someone called ask fight
-        Inventory acceptGui = Bukkit.createInventory(null, 9, ChatColor.RED +  "Arena For Fight responder");
+        Inventory acceptGui = Bukkit.createInventory(null, 9, GuiName);
         ItemStack agree = new ItemStack(Material.DIAMOND_SWORD);
         ItemStack disagree = new ItemStack(Material.WOODEN_SWORD);
 
@@ -256,5 +326,6 @@ public class EventListener implements Listener {
 
         return  acceptGui;
     }
+
 
 }
