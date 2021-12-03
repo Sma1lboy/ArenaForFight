@@ -1,16 +1,14 @@
 package com.sma1lboy.ArenaForFight;
-
-
-
 import org.bukkit.entity.Player;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
 public class SQLGetter {
-    private ArenaForFight plugin = ArenaForFight.getPlugin(ArenaForFight.class);
+    private ArenaForFight plugin;
+
+    //instance arena for fight
     public SQLGetter(ArenaForFight plugin) {
         this.plugin = plugin;
     }
