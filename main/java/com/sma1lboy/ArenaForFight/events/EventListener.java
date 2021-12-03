@@ -1,4 +1,5 @@
 package com.sma1lboy.ArenaForFight.events;
+import jdk.jfr.MetadataDefinition;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
@@ -6,9 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -28,9 +27,15 @@ public class EventListener implements Listener {
     private Player firstPlayer = null;
     private Player secondPlayer = null;
     //private HashMap<Player, Double> HPManager = new HashMap<>();
+    //manage player fight match
     public HashMap<Player, Player> playerManager = new HashMap<>();
 //    private HashMap<Player, WorldBorder> worldBorderManager = new HashMap<>();
+    //manager player's Inventory
     public HashMap<Player, ItemStack[]> playerInvManager = new HashMap<>();
+    //manage players' Health
+    public HashMap<Player, Double> playerHealthManager = new HashMap<>();
+
+
 
     //GUI PART
     //It called when player interact entity
@@ -41,7 +46,7 @@ public class EventListener implements Listener {
         Inventory gui = setMainMenu();
 
 //        FIXME: showing the entity not player right now, test with pig
-        if ((event.getRightClicked() instanceof Player secondPlayer)) {
+        if ((event.getRightClicked() instanceof Player secondPlayer) && firstPlayer.isSneaking()) {
             //store to class variable
             this.secondPlayer = secondPlayer;
             event.setCancelled(true);
@@ -91,6 +96,8 @@ public class EventListener implements Listener {
                     this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + " asks to fight!");
                     this.secondPlayer.openInventory(acceptGui);
                     break;
+                case BARRIER:
+                    player.closeInventory();
             }
             event.setCancelled(true);
         }
@@ -102,11 +109,13 @@ public class EventListener implements Listener {
                 case DIAMOND_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
+                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
+                    playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
                     firstPlayer.setHealth(20);
                     secondPlayer.setHealth(20);
-                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
-                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
 
                     playerManager.put(this.firstPlayer, this.secondPlayer);
 
@@ -115,6 +124,9 @@ public class EventListener implements Listener {
 
                     break;
                 //disagree fight
+                case WOODEN_SWORD:
+                    secondPlayer.closeInventory();
+                    break;
             }
             event.setCancelled(true);
         }
@@ -125,11 +137,15 @@ public class EventListener implements Listener {
                 case DIAMOND_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
+                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
+                    playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
                     firstPlayer.setHealth(20);
                     secondPlayer.setHealth(20);
-                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
-                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    //FIXME: health check
+                    firstPlayer.sendMessage(playerHealthManager.toString());
                     playerInvManager.put(firstPlayer, firstPlayer.getInventory().getContents());
                     playerInvManager.put(secondPlayer, secondPlayer.getInventory().getContents());
                     playerManager.put(this.firstPlayer, this.secondPlayer);
@@ -172,8 +188,6 @@ public class EventListener implements Listener {
         //FIXME: TEST
         e.getEntity().sendMessage(String.valueOf(e.getDamager().getType()));
         if (playerManager.containsValue((Player)e.getDamager()) || playerManager.containsKey((Player)e.getDamager())) {
-
-
             //getEntity giving who is getting damage
             e.getEntity().getName();
 
@@ -195,12 +209,14 @@ public class EventListener implements Listener {
                data.setPower(0);
                winnerFirework.setFireworkMeta(data);
 
-               ((Player) e.getDamager()).setHealth(20);
-               ((Player) e.getEntity()).setHealth(20);
+
+               ((Player) e.getDamager()).setHealth(playerHealthManager.get((Player)e.getDamager()));
+               ((Player) e.getEntity()).setHealth(playerHealthManager.get((Player) e.getEntity()));
                //if random item mode, it will give back player's inventory back
                if(playerInvManager.containsKey((Player) e.getDamager())) {
                    ((Player) e.getDamager()).getInventory().setContents(playerInvManager.get((Player) e.getDamager()));
                    ((Player) e.getEntity()).getInventory().setContents(playerInvManager.get((Player) e.getEntity()));
+
                }
                //remove both player from the hashmap to prevent keep they can't hit anything
                if (playerManager.containsKey((Player)e.getDamager())) {
@@ -209,6 +225,8 @@ public class EventListener implements Listener {
                else {
                    playerManager.remove((Player)e.getEntity());
                }
+               playerHealthManager.remove((Player) e.getEntity());
+               playerHealthManager.remove((Player) e.getDamager());
                playerInvManager.remove((Player)e.getEntity());
                playerInvManager.remove((Player)e.getDamager());
                //FIXME: check clear or not
@@ -264,8 +282,9 @@ public class EventListener implements Listener {
         ItemStack rndItemFight = new ItemStack(Material.GOLDEN_SWORD);
         ItemStack quit = new ItemStack(Material.BARRIER);
 
-        //Set button's lore and meta
+        //Set FIGHT  button's lore and meta
         ItemMeta fightMeta = fight.getItemMeta();
+        assert fightMeta != null;
         fightMeta.setDisplayName(ChatColor.WHITE + "Start SOLO Fight");
         fightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
         fightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
@@ -278,6 +297,7 @@ public class EventListener implements Listener {
         fight.setItemMeta(fightMeta);
 
         ItemMeta rndItemFightMeta = rndItemFight.getItemMeta();
+        assert rndItemFightMeta != null;
         rndItemFightMeta.setDisplayName(ChatColor.WHITE + "Start random items Fight");
         rndItemFightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
         rndItemFightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
@@ -288,6 +308,11 @@ public class EventListener implements Listener {
         rndItemFightMeta.setLore(rndItemFightMetaLore);
         rndItemFight.setItemMeta(rndItemFightMeta);
 
+
+        //SET quit button
+        ItemMeta quitMeta = quit.getItemMeta();
+        quitMeta.setDisplayName(ChatColor.RED + "Quit");
+        quit.setItemMeta(quitMeta);
 
         gui.setItem(2, fight);
         gui.setItem(4, rndItemFight);
@@ -303,6 +328,7 @@ public class EventListener implements Listener {
 
         //add meta and lore to Agree button
         ItemMeta agreeMeta = agree.getItemMeta();
+        assert agreeMeta != null;
         agreeMeta.setDisplayName(ChatColor.GREEN + "Agree fight");
         agreeMeta.addEnchant(Enchantment.ARROW_DAMAGE, 1 , false);
         agreeMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
