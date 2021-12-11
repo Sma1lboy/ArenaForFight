@@ -94,14 +94,14 @@ public class EventListener implements Listener  {
                     acceptGui = setAcceptMenu("SOLO");
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     player.closeInventory();
-                    this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + " asks to fight!");
+                    this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + getConfigText("askFight"));
                     this.secondPlayer.openInventory(acceptGui);
                     break;
                 case GOLDEN_SWORD:
                     acceptGui = setAcceptMenu("Random Items Fight");
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     player.closeInventory();
-                    this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + " asks to fight!");
+                    this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + getConfigText("askFight"));
                     this.secondPlayer.openInventory(acceptGui);
                     break;
                 case BARRIER:
@@ -117,8 +117,8 @@ public class EventListener implements Listener  {
                 case DIAMOND_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
-                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
-                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    firstPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
                     playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
                     playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
@@ -145,8 +145,10 @@ public class EventListener implements Listener  {
                 case DIAMOND_SWORD:
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
-                    firstPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
-                    secondPlayer.sendTitle(ChatColor.GREEN + "Fight Start!", "Go punch his face!", 1, 40, 1);
+                    firstPlayer.sendTitle(ChatColor.GREEN + plugin.getConfig().getString(plugin.language + ".fightStartTitle"),
+                            getConfigText("fightStartSubtitle"), 1, 40, 1);
+                    secondPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
+
                     playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
                     playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
@@ -154,6 +156,7 @@ public class EventListener implements Listener  {
                     secondPlayer.setHealth(20);
                     //FIXME: health check
                     firstPlayer.sendMessage(playerHealthManager.toString());
+
                     playerInvManager.put(firstPlayer, firstPlayer.getInventory().getContents());
                     playerInvManager.put(secondPlayer, secondPlayer.getInventory().getContents());
                     playerManager.put(this.firstPlayer, this.secondPlayer);
@@ -164,14 +167,20 @@ public class EventListener implements Listener  {
                     //makes the weapon more fun or something that!
                     ItemStack[] mainHandWeapon = {new ItemStack(Material.DIAMOND_SWORD), new ItemStack(Material.WOODEN_SWORD),
                             new ItemStack(Material.IRON_AXE)};
+                    ItemStack[] helmet = {new ItemStack(Material.DIAMOND_HELMET)};
                     ItemStack[] chestPlate = {new ItemStack(Material.DIAMOND_CHESTPLATE), new ItemStack(Material.IRON_CHESTPLATE),
                             new ItemStack(Material.LEATHER_CHESTPLATE)};
+                    ItemStack[] legs = {new ItemStack(Material.LEATHER_LEGGINGS)};
+                    ItemStack[] boots = {new ItemStack(Material.IRON_BOOTS)};
+
 
                     firstPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
+                    firstPlayer.getInventory().setHelmet(helmet[randomPick(helmet.length)]);
                     firstPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
+                    firstPlayer.getInventory().setLeggings(legs[randomPick(legs.length)]);
+                    firstPlayer.getInventory().setBoots(boots[randomPick(boots.length)]);
                     secondPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
                     secondPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
-
 
                     break;
                 //disagree
@@ -201,8 +210,8 @@ public class EventListener implements Listener  {
 
             if ((playerGotDmg.getHealth() - e.getDamage()) < 0.5){
                 e.setCancelled(true);
-                playerGotDmg.sendTitle(ChatColor.RED + "You lose!", "Don't worry, win back next time!", 1, 100, 1);
-                ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + "You WIN!", "Keep Going!", 1, 100, 1);
+                playerGotDmg.sendTitle(ChatColor.RED + getConfigText("lose"), getConfigText("loseSubline"), 1, 100, 1);
+                ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + getConfigText("win"), getConfigText("winSubline"), 1, 100, 1);
 
                 //counts system with mysql
                 plugin.data.addPoints(e.getDamager().getUniqueId(),1);
@@ -231,10 +240,12 @@ public class EventListener implements Listener  {
 
                 //Firework to the winner!!!!!!!!!!!!!!
                 Firework winnerFirework = e.getDamager().getWorld().spawn(e.getDamager().getLocation(), Firework.class);
-                FireworkMeta data = winnerFirework.getFireworkMeta();
-                data.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
-                data.setPower(0);
-                winnerFirework.setFireworkMeta(data);
+                FireworkMeta fireMeta = winnerFirework.getFireworkMeta();
+                fireMeta.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
+                fireMeta.setPower(0);
+
+
+                winnerFirework.setFireworkMeta(fireMeta);
             }
         }
     }
@@ -292,12 +303,12 @@ public class EventListener implements Listener  {
         //Set FIGHT  button's lore and meta
         ItemMeta fightMeta = fight.getItemMeta();
         assert fightMeta != null;
-        fightMeta.setDisplayName(ChatColor.WHITE + "Start SOLO Fight");
+        fightMeta.setDisplayName(ChatColor.WHITE + plugin.getConfig().getString(plugin.language + ".soloButton"));
         fightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
         fightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         //Create a lore
         List<String> fightMetaLore = new ArrayList<>();
-        fightMetaLore.add(ChatColor.GOLD + "Click to Start fight with your friend!");
+        fightMetaLore.add(ChatColor.GOLD + plugin.getConfig().getString(plugin.language + ".soloButtonLore"));
         fightMetaLore.add("XD");
         //Assign back to button from class ItemMeta
         fightMeta.setLore(fightMetaLore);
@@ -305,12 +316,12 @@ public class EventListener implements Listener  {
 
         ItemMeta rndItemFightMeta = rndItemFight.getItemMeta();
         assert rndItemFightMeta != null;
-        rndItemFightMeta.setDisplayName(ChatColor.WHITE + "Start random items Fight");
+        rndItemFightMeta.setDisplayName(ChatColor.WHITE + plugin.getConfig().getString(plugin.language + ".randomFightButton"));
         rndItemFightMeta.addEnchant(Enchantment.ARROW_DAMAGE, 5, true);
         rndItemFightMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         //Create a lore
         List<String> rndItemFightMetaLore = new ArrayList<>();
-        rndItemFightMetaLore.add(ChatColor.GOLD + "Diamond or wood?");
+        rndItemFightMetaLore.add(ChatColor.GOLD + plugin.getConfig().getString(plugin.language + ".randomFightButtonLore"));
         //Assign back to button from class ItemMeta
         rndItemFightMeta.setLore(rndItemFightMetaLore);
         rndItemFight.setItemMeta(rndItemFightMeta);
@@ -336,20 +347,20 @@ public class EventListener implements Listener  {
         //add meta and lore to Agree button
         ItemMeta agreeMeta = agree.getItemMeta();
         assert agreeMeta != null;
-        agreeMeta.setDisplayName(ChatColor.GREEN + "Agree fight");
+        agreeMeta.setDisplayName(ChatColor.GREEN + getConfigText("agreeFight"));
         agreeMeta.addEnchant(Enchantment.ARROW_DAMAGE, 1 , false);
         agreeMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         List<String> agreeMetaLore = new ArrayList<>();
-        agreeMetaLore.add(ChatColor.GOLD + "Agree to fight with you friend!");
+        agreeMetaLore.add(ChatColor.GOLD + getConfigText("agreeFightLore"));
         agreeMeta.setLore(agreeMetaLore);
         agree.setItemMeta(agreeMeta);
         //add meta and lore to Disagree button
         ItemMeta disagreeMeta = agree.getItemMeta();
-        disagreeMeta.setDisplayName(ChatColor.RED + "Disagree fight");
+        disagreeMeta.setDisplayName(ChatColor.RED + getConfigText("disagreeFight"));
         disagreeMeta.addEnchant(Enchantment.ARROW_DAMAGE, 1 , false);
         disagreeMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         List<String> disagreeMetaLore = new ArrayList<>();
-        disagreeMetaLore.add(ChatColor.GOLD + "Quit");
+        disagreeMetaLore.add(ChatColor.GOLD + getConfigText("disagreeFightLore"));
         disagreeMeta.setLore(disagreeMetaLore);
         disagree.setItemMeta(disagreeMeta);
 
@@ -358,5 +369,8 @@ public class EventListener implements Listener  {
 
         return  acceptGui;
     }
-
+    //reduce redundancy
+    public String getConfigText(String str){
+        return plugin.getConfig().getString(plugin.language + "." + "str");
+    }
 }
