@@ -1,0 +1,14 @@
+name: ArenaForFight
+version: 1.0 Snapshot
+author: Sma1lboy
+main: com.sma1lboy.ArenaForFight.ArenaForFight
+api-version: 1.17
+commands:
+  gui:
+    description: open the gui menu
+    usage: /<command>
+    aliases: GUI
+  healthCheck:
+    description: check health
+    usage: /<command>
+

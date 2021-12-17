@@ -1,4 +1,4 @@
-package com.sma1lboy.ArenaForFight;
+package com.sma1lboy.ArenaForFight.SQL;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

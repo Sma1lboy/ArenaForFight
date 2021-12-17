@@ -1,4 +1,5 @@
-package com.sma1lboy.ArenaForFight;
+package com.sma1lboy.ArenaForFight.SQL;
+import com.sma1lboy.ArenaForFight.ArenaForFight;
 import org.bukkit.entity.Player;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
