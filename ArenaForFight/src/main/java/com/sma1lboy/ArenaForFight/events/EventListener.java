@@ -33,7 +33,8 @@ public class EventListener implements Listener  {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
-        plugin.data.createPlayer(player);
+        //TODO have to create data for DB
+        this.plugin.sqlGetter.createPlayer(player);
     }
 
     //store second player
@@ -212,8 +213,8 @@ public class EventListener implements Listener  {
                 playerGotDmg.sendTitle(ChatColor.RED + getConfigText("lose"), getConfigText("loseSubline"), 1, 100, 1);
                 ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + getConfigText("win"), getConfigText("winSubline"), 1, 100, 1);
 
-                //counts system with mysql
-                plugin.data.addPoints(e.getDamager().getUniqueId(),1);
+                //TODO counts system with mysql
+
 
                 ((Player) e.getDamager()).setHealth(playerHealthManager.get((Player)e.getDamager()));
                 ((Player) e.getEntity()).setHealth(playerHealthManager.get((Player) e.getEntity()));

@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ArenaForFight.iml" filepath="$PROJECT_DIR$/.idea/ArenaForFight.iml" />
       <module fileurl="file://$PROJECT_DIR$/ArenaForFight/fight-arena-plugin.iml" filepath="$PROJECT_DIR$/ArenaForFight/fight-arena-plugin.iml" />
     </modules>
   </component>

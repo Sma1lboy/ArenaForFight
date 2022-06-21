@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="fight-arena-plugin:jar">
+    <output-path>$PROJECT_DIR$/../../workspace_minecraft/Minecraft Servers/1.17.1 Spigot Server/plugins</output-path>
+    <root id="archive" name="fight-arena-plugin.jar">
+      <element id="module-output" name="fight-arena-plugin" />
+    </root>
+  </artifact>
+</component>
