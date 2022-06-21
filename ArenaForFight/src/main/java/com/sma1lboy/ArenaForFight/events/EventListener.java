@@ -225,7 +225,7 @@ public class EventListener implements Listener  {
                 fireMeta.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
                 fireMeta.setPower(0);
 
-                //sign
+                //signd
                 winnerFirework.setFireworkMeta(fireMeta);
             }
         }
