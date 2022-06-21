@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="fight-arena-plugin:jar2">
+    <output-path>$PROJECT_DIR$/../../workspace_minecraft/Minecraft_Servers/1.17.1SpigotServer/plugins</output-path>
+    <root id="archive" name="fight-arena-plugin.jar">
+      <element id="module-output" name="fight-arena-plugin" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.36.0.3/sqlite-jdbc-3.36.0.3.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

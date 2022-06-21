@@ -7,13 +7,11 @@ import com.sma1lboy.ArenaForFight.sqlite.SQLiteGetter;
 import org.bukkit.*;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 
+/**
+ * @author jacksonchen
+ */
 public class ArenaForFight extends JavaPlugin implements Listener {
 
 
@@ -23,32 +21,30 @@ public class ArenaForFight extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        //set up mysql
-        //FIXME: haven't create database yet
-
-        File dataFolder = getDataFolder();
-        File file = new File(dataFolder.getAbsolutePath() + "/server.db");
-
-        if(!file.exists()) {
-            sql = new SQLite(dataFolder.getAbsolutePath() + "/server.db");
-            sqlGetter = new SQLiteGetter(this);
-            sql.connect();
-            sql.createTable();
+        /*
+         * Assign data folder if not exist
+         */
+        if (!getDataFolder().exists()) {
+            this.getDataFolder().mkdir();
         }
 
+        //open the database;
+        sql = new SQLite(getDataFolder().getAbsolutePath() + "/server.db");
+        sql.connect();
+        sqlGetter = new SQLiteGetter(this);
+        sqlGetter.createTable();
         if(sql.isConnected()) {
-            getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[AFF]:" + "sql is connected!");
+            getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: database connceted" );
         }
+
+
 
         saveDefaultConfig();
         reloadConfig();
-        //setting the language of this plugin
-        language = "lang." + this.getConfig().getString("language");
-        /*
-        save the messaeg.yml
-         */
         saveResource("message.yml", true);
-        this.getResource("message.yml");
+        //setting the language of this plugin
+        language = this.getConfig().getString("language");
+        String lang = "lang." + language;
 
 
 
@@ -56,12 +52,12 @@ public class ArenaForFight extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new EventListener(this), this);
         getServer().getPluginManager().registerEvents(this, this);
         Objects.requireNonNull(getServer().getPluginCommand("gui")).setExecutor(new GUICommand());
-        getServer().getPluginCommand("healthCheck").setExecutor(new CheckHealthCommand());
+        Objects.requireNonNull(getServer().getPluginCommand("healthCheck")).setExecutor(new CheckHealthCommand());
 
-        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: " + ChatColor.WHITE +
-                this.getConfig().getString(language + "." + "message"));
-        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: " + ChatColor.WHITE +
-                this.getConfig().getString(language + "." + "pluginEnable"));
+        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: " + ChatColor.BLACK +
+                this.getConfig().getString("pluginMessage.message"));
+        getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArenaForFight]: " + ChatColor.BLACK +
+                this.getConfig().getString("pluginMessage.pluginEnable"));
 
 
     }
@@ -69,8 +65,8 @@ public class ArenaForFight extends JavaPlugin implements Listener {
     public void onDisable() {
         sql.disconnect();
         getServer().getConsoleSender().sendMessage(ChatColor.RED + "[AFF]:" + "sql is disconnect!");
-        getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ArenaForFight]: " + ChatColor.WHITE +
-                this.getConfig().getString(language + "." + "pluginDisable"));
+        getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ArenaForFight]: " + ChatColor.BLACK +
+                this.getConfig().getString("pluginMessage.pluginDisable"));
 
     }
 

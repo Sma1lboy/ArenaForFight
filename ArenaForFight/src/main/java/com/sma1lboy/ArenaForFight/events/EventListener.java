@@ -8,12 +8,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -21,19 +19,14 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import java.util.*;
 
-
 public class EventListener implements Listener  {
-
-    //Arena for fight instance
-    private ArenaForFight plugin;
+    private final ArenaForFight plugin;
     public EventListener(ArenaForFight plugin) {
         this.plugin = plugin;
     }
-
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
-        //TODO have to create data for DB
         this.plugin.sqlGetter.createPlayer(player);
     }
 
@@ -64,23 +57,22 @@ public class EventListener implements Listener  {
             }
         }
     }
-
-    //it called when someone open the inventory/GUI
+//    //it called when someone open the inventory/GUI
     @EventHandler
     public void clickGUIEvent(InventoryClickEvent event) {
 
         Player player = (Player) event.getWhoClicked();
 
         if (event.getView().getTitle().equalsIgnoreCase(ChatColor.AQUA+ "GUI")) {
-            switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
-                case DIAMOND_SWORD:
+            switch (Objects.requireNonNull(event.getCurrentItem()).getType()) {
+                case DIAMOND_SWORD -> {
                     player.closeInventory();
                     player.sendMessage("nice");
-                    break;
-                case BARRIER:
+                }
+                case BARRIER -> {
                     player.closeInventory();
                     player.sendMessage("close");
-                    break;
+                }
             }
             event.setCancelled(true);
         }
@@ -88,75 +80,68 @@ public class EventListener implements Listener  {
         //create a gui for accept fight or not
         Inventory acceptGui;
         //it called when someone right-clicked another player to ask to fight
-        if (event.getView().getTitle().equalsIgnoreCase("Arena For Fight")) {
-            switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
-                case DIAMOND_SWORD:
+        if ("Arena For Fight".equalsIgnoreCase(event.getView().getTitle())) {
+            switch (Objects.requireNonNull(event.getCurrentItem()).getType()) {
+                case DIAMOND_SWORD -> {
                     acceptGui = setAcceptMenu("SOLO");
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     player.closeInventory();
                     this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + getConfigText("askFight"));
                     this.secondPlayer.openInventory(acceptGui);
-                    break;
-                case GOLDEN_SWORD:
+                }
+                case GOLDEN_SWORD -> {
                     acceptGui = setAcceptMenu("Random Items Fight");
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     player.closeInventory();
                     this.secondPlayer.sendMessage(ChatColor.GOLD + player.getName() + getConfigText("askFight"));
                     this.secondPlayer.openInventory(acceptGui);
-                    break;
-                case BARRIER:
-                    player.closeInventory();
+                }
+                case BARRIER -> player.closeInventory();
             }
             event.setCancelled(true);
         }
 
         //it called when someone after right-clicked, another player will get a gui to agree or disagree
-        if (event.getView().getTitle().equalsIgnoreCase("SOLO")) {
-            switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
+        if ("SOLO".equalsIgnoreCase(event.getView().getTitle())) {
+            switch (Objects.requireNonNull(event.getCurrentItem()).getType()) {
                 //agree fight
-                case DIAMOND_SWORD:
+                case DIAMOND_SWORD -> {
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
                     firstPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
                     secondPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
                     playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
-                    playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
+                    playerHealthManager.put(secondPlayer, secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
                     firstPlayer.setHealth(20);
                     secondPlayer.setHealth(20);
-
                     playerManager.put(this.firstPlayer, this.secondPlayer);
 
                     //FIXME: delete next line after finish TEST
                     firstPlayer.sendMessage(playerManager.toString());
-
-                    break;
+                }
                 //disagree fight
-                case WOODEN_SWORD:
-                    secondPlayer.closeInventory();
-                    break;
+                case WOODEN_SWORD -> secondPlayer.closeInventory();
             }
             event.setCancelled(true);
         }
         //random Items fight
-        if(event.getView().getTitle().equalsIgnoreCase("Random Items Fight")) {
-            switch(Objects.requireNonNull(event.getCurrentItem()).getType()) {
+        if("Random Items Fight".equalsIgnoreCase(event.getView().getTitle())) {
+            switch (Objects.requireNonNull(event.getCurrentItem()).getType()) {
                 //agree
-                case DIAMOND_SWORD:
+                case DIAMOND_SWORD -> {
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.secondPlayer.closeInventory();
                     firstPlayer.sendTitle(ChatColor.GREEN + plugin.getConfig().getString(plugin.language + ".fightStartTitle"),
                             getConfigText("fightStartSubtitle"), 1, 40, 1);
                     secondPlayer.sendTitle(ChatColor.GREEN + getConfigText("fightStartTitle"), getConfigText("fightStartSubtitle"), 1, 40, 1);
-
                     playerHealthManager.put(firstPlayer, firstPlayer.getHealth());
-                    playerHealthManager.put(secondPlayer,secondPlayer.getHealth());
+                    playerHealthManager.put(secondPlayer, secondPlayer.getHealth());
                     //FIXME: needs to change to maximum health
                     firstPlayer.setHealth(20);
                     secondPlayer.setHealth(20);
                     //FIXME: health check
                     firstPlayer.sendMessage(playerHealthManager.toString());
-
                     playerInvManager.put(firstPlayer, firstPlayer.getInventory().getContents());
                     playerInvManager.put(secondPlayer, secondPlayer.getInventory().getContents());
                     playerManager.put(this.firstPlayer, this.secondPlayer);
@@ -172,8 +157,6 @@ public class EventListener implements Listener  {
                             new ItemStack(Material.LEATHER_CHESTPLATE)};
                     ItemStack[] legs = {new ItemStack(Material.LEATHER_LEGGINGS)};
                     ItemStack[] boots = {new ItemStack(Material.IRON_BOOTS)};
-
-
                     firstPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
                     firstPlayer.getInventory().setHelmet(helmet[randomPick(helmet.length)]);
                     firstPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
@@ -181,14 +164,12 @@ public class EventListener implements Listener  {
                     firstPlayer.getInventory().setBoots(boots[randomPick(boots.length)]);
                     secondPlayer.getInventory().setItemInMainHand(mainHandWeapon[randomPick(mainHandWeapon.length)]);
                     secondPlayer.getInventory().setChestplate(chestPlate[randomPick(chestPlate.length)]);
-
-                    break;
+                }
                 //disagree
-                case WOODEN_SWORD:
+                case WOODEN_SWORD -> {
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 2);
                     this.secondPlayer.closeInventory();
-                    break;
-
+                }
             }
         }
     }
@@ -250,13 +231,6 @@ public class EventListener implements Listener  {
         }
     }
 
-    // it called prevent player pick up item when they are fighting
-    @EventHandler
-    public void playerPickupItemEvent(PlayerPickupItemEvent e) {
-        if (playerManager.containsKey(e.getPlayer())) {
-            e.setCancelled(true);
-        }
-    }
     // it called prevent player drops item when they are fighting
     @EventHandler
     public void playerDropItemEvent(PlayerDropItemEvent e ) {
@@ -279,17 +253,6 @@ public class EventListener implements Listener  {
         }
     }
 
-    //prevent player death by falling or mob kill when they are fighting
-//    //FIXME: bug
-//    @EventHandler
-//    public void playerDeathEvent(EntityDeathEvent e) {
-//        if(playerManager.containsKey((Player)e.getEntity())) {
-//            playerManager.remove((Player)e.getEntity());
-//        }
-//        else if (playerManager.containsValue((Player)e.getEntity())) {
-//            //FIXME:bug
-//        }
-//    }
 
     private Inventory setMainMenu() {
         //Create Fight agreement GUI

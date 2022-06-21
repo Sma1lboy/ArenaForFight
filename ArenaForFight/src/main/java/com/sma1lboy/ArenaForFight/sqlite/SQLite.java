@@ -6,10 +6,11 @@ public class SQLite {
 
 
     private String url = "jdbc:sqlite:";
-    private Connection connection;
+    public Connection connection;
 
     public SQLite(String url) {
         this.url += url;
+        connect();
     }
 
     public void connect() {
@@ -31,15 +32,7 @@ public class SQLite {
         }
     }
 
-    public void createTable() {
-        try {
-            String sql = "CREATE TABLE users(user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, uuid INTEGER DEFAULT 0 NOT NULL, points INTEGER DEFAULT 0 NOT NULL)";
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ps.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+
 
     public Connection getConnection() {
         return this.connection;
