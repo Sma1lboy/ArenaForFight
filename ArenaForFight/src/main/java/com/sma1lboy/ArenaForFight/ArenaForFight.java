@@ -43,7 +43,7 @@ public class ArenaForFight extends JavaPlugin implements Listener {
         reloadConfig();
         saveResource("message.yml", true);
         //setting the language of this plugin
-        language = this.getConfig().getString("language");
+        language ="lang" +  this.getConfig().getString("language");
         String lang = "lang." + language;
 
 

@@ -183,50 +183,55 @@ public class EventListener implements Listener  {
     @EventHandler
     public void onPlayerFightingPlayer(EntityDamageByEntityEvent e) {
 
-        if (playerManager.containsValue((Player)e.getDamager()) || playerManager.containsKey((Player)e.getDamager())) {
-            //getEntity giving who is getting damage
-            e.getEntity().getName();
+        /*
+        You need to check if the Damager and receiver is a player. The damager can also be a skeleton or a zombie
+         */
+        if(e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
 
-            Player playerGotDmg = (Player) e.getEntity();
+            if (playerManager.containsValue((Player) e.getDamager()) || playerManager.containsKey((Player) e.getDamager())) {
+                //getEntity giving who is getting damage
+                e.getEntity().getName();
 
-            if ((playerGotDmg.getHealth() - e.getDamage()) < 0.5){
-                e.setCancelled(true);
-                playerGotDmg.sendTitle(ChatColor.RED + getConfigText("lose"), getConfigText("loseSubline"), 1, 100, 1);
-                ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + getConfigText("win"), getConfigText("winSubline"), 1, 100, 1);
+                Player playerGotDmg = (Player) e.getEntity();
 
-                //TODO counts system with mysql
+                if ((playerGotDmg.getHealth() - e.getDamage()) < 0.5) {
+                    e.setCancelled(true);
+                    playerGotDmg.sendTitle(ChatColor.RED + getConfigText("lose"), getConfigText("loseSubline"), 1, 100, 1);
+                    ((Player) e.getDamager()).sendTitle(ChatColor.GOLD + getConfigText("win"), getConfigText("winSubline"), 1, 100, 1);
+
+                    //TODO counts system with mysql
 
 
-                ((Player) e.getDamager()).setHealth(playerHealthManager.get((Player)e.getDamager()));
-                ((Player) e.getEntity()).setHealth(playerHealthManager.get((Player) e.getEntity()));
-                //if random item mode, it will give back player's inventory back
-                if(playerInvManager.containsKey((Player) e.getDamager())) {
-                    ((Player) e.getDamager()).getInventory().setContents(playerInvManager.get((Player) e.getDamager()));
-                    ((Player) e.getEntity()).getInventory().setContents(playerInvManager.get((Player) e.getEntity()));
+                    ((Player) e.getDamager()).setHealth(playerHealthManager.get((Player) e.getDamager()));
+                    ((Player) e.getEntity()).setHealth(playerHealthManager.get((Player) e.getEntity()));
+                    //if random item mode, it will give back player's inventory back
+                    if (playerInvManager.containsKey((Player) e.getDamager())) {
+                        ((Player) e.getDamager()).getInventory().setContents(playerInvManager.get((Player) e.getDamager()));
+                        ((Player) e.getEntity()).getInventory().setContents(playerInvManager.get((Player) e.getEntity()));
 
+                    }
+                    //remove both player from the hashmap to prevent keep they can't hit anything
+                    if (playerManager.containsKey((Player) e.getDamager())) {
+                        playerManager.remove((Player) e.getDamager());
+                    } else {
+                        playerManager.remove((Player) e.getEntity());
+                    }
+                    playerHealthManager.remove((Player) e.getEntity());
+                    playerHealthManager.remove((Player) e.getDamager());
+                    playerInvManager.remove((Player) e.getEntity());
+                    playerInvManager.remove((Player) e.getDamager());
+                    //FIXME: check clear or not
+                    firstPlayer.sendMessage(playerManager.toString());
+
+                    //Firework to the winner!!!!!!!!!!!!!!
+                    Firework winnerFirework = e.getDamager().getWorld().spawn(e.getDamager().getLocation(), Firework.class);
+                    FireworkMeta fireMeta = winnerFirework.getFireworkMeta();
+                    fireMeta.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
+                    fireMeta.setPower(0);
+
+                    //signd
+                    winnerFirework.setFireworkMeta(fireMeta);
                 }
-                //remove both player from the hashmap to prevent keep they can't hit anything
-                if (playerManager.containsKey((Player)e.getDamager())) {
-                    playerManager.remove((Player) e.getDamager());
-                }
-                else {
-                    playerManager.remove((Player)e.getEntity());
-                }
-                playerHealthManager.remove((Player) e.getEntity());
-                playerHealthManager.remove((Player) e.getDamager());
-                playerInvManager.remove((Player)e.getEntity());
-                playerInvManager.remove((Player)e.getDamager());
-                //FIXME: check clear or not
-                firstPlayer.sendMessage(playerManager.toString());
-
-                //Firework to the winner!!!!!!!!!!!!!!
-                Firework winnerFirework = e.getDamager().getWorld().spawn(e.getDamager().getLocation(), Firework.class);
-                FireworkMeta fireMeta = winnerFirework.getFireworkMeta();
-                fireMeta.addEffect(FireworkEffect.builder().withColor(Color.GREEN).with(FireworkEffect.Type.BALL_LARGE).withFlicker().build());
-                fireMeta.setPower(0);
-
-                //signd
-                winnerFirework.setFireworkMeta(fireMeta);
             }
         }
     }
