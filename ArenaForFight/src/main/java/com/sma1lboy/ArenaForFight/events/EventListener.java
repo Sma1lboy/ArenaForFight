@@ -337,6 +337,7 @@ public class EventListener implements Listener  {
         acceptGui.setItem(6, disagree);
 
         return  acceptGui;
+
     }
     //reduce redundancy
     public String getConfigText(String str){

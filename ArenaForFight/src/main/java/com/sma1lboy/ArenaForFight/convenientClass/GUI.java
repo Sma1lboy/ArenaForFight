@@ -9,11 +9,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class GUI {
     Inventory gui;
-//    int guiSize;
-//
-//    ItemStack
-
-
     private Inventory getGui() {
         return this.gui;
     }
